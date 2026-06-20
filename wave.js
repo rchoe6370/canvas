@@ -1,17 +1,15 @@
 const canvasSketch = require('canvas-sketch');
 const random = require('canvas-sketch-util/random');
-const math = require('canvas-sketch-util/math');
 
 const settings = {
   dimensions: [ 1080, 1080 ],
   animate: true
 };
 
-const sketch = ({ context, width, height }) => {
+const particles = [];
+const numParticles = 50;
 
-  const particles = [];
-  const numParticles = 20;
-    
+const sketch = ({ context, width, height }) => {  
   
   for (let i = 0; i < numParticles; i++) {
 
@@ -35,6 +33,34 @@ const sketch = ({ context, width, height }) => {
     });
   };
 };
+
+const connect = (context) => {
+  for (let i = 0; i < numParticles; i++) {
+    for (let j = i + 1; j < numParticles; j++) {
+      let ax = particles[i].x;
+      let ay = particles[i].y;
+      let bx = particles[j].x;
+      let by = particles[j].y;
+
+      let dx = ax - bx;
+      let dy = ay - by;
+      let dd = Math.sqrt(dx * dx + dy * dy)
+
+      if (dd < 100) {
+        context.save()
+        context.strokeStyle = 'white';
+        context.lineWidth = 2;
+
+        context.beginPath();
+        context.moveTo(ax, ay);
+        context.lineTo(bx, by);
+        context.stroke();
+        context.restore();
+
+      }
+    }
+  }
+}
 
 canvasSketch(sketch, settings);
 
@@ -62,7 +88,6 @@ class Particle {
     if (this.y < 0 || this.y > this.height) {
       this.vy *= -1;
     }
-
   }
 
   draw(context) {
@@ -75,5 +100,8 @@ class Particle {
     context.fill();
 
     context.restore();
+
+    connect(context);
   }
 }
+
