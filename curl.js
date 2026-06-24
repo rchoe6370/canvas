@@ -6,6 +6,11 @@ const settings = {
     animate: true
 };
 
+let audio;
+let audioContext, audioData, sourceNode, analyserNode;
+let manager;
+let minDb, maxDb;
+
 const particles = [];
 const particleSize = 3.4;
 const offset = 0.05;
@@ -16,6 +21,10 @@ const sketch = ({ context, canvas, width, height }) => {
     const numParticles = 2000;
 
     for (let i = 0; i < numParticles; i++) {
+        if (!audioContext) return;
+
+        analyserNode.getFloatFrequencyData(audioData);
+
         let x = random.range(width);
         let y = random.range(height);
 
@@ -43,6 +52,41 @@ const sketch = ({ context, canvas, width, height }) => {
     };
 };
 
+const addListeners = () => {
+  window.addEventListener('mouseup', () => {
+    if (!audioContext) createAudio();
+
+    if(audio.paused) {
+      audio.play();
+      manager.play();
+    }
+    else {
+      audio.pause();
+      manager.pause();
+    }
+  });
+};
+
+const createAudio = () => {
+  audio = document.createElement('audio');
+  audio.src = 'audio/wave to earth - love.mp3';
+
+  audioContext = new AudioContext();
+
+  sourceNode = audioContext.createMediaElementSource(audio);
+  sourceNode.connect(audioContext.destination);
+
+  analyserNode = audioContext.createAnalyser();
+  analyserNode.fftSize = 512;
+  analyserNode.smoothingTimeConstant = 0.9;
+  sourceNode.connect(analyserNode);
+
+  minDb = analyserNode.minDecibels;
+  maxDb = analyserNode.maxDecibels;
+
+  audioData = new Float32Array(analyserNode.frequencyBinCount);
+};
+
 canvasSketch(sketch, settings);
 
 const curl = ({ x, y }) => {
@@ -63,6 +107,14 @@ const curl = ({ x, y }) => {
 
     return { dx, dy }
 };
+
+const start = async () => {
+  addListeners();
+  manager = await canvasSketch(sketch, settings);
+  manager.pause();
+};
+
+start();
 
 class Particle {
     constructor({ x, y, color, width, height }) {
