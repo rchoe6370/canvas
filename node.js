@@ -19,7 +19,7 @@ const sketch = ({ context, width, height }) => {
       let x = random.range(width);
       let y = random.range(height);
 
-      let type = Math.random() < 0.05 ? 'heavy' : 'normal';
+      let type = Math.random() < 0.04 ? 'heavy' : 'normal';
 
       let particle = new Particle({ x, y, type, width, height });
 
@@ -52,7 +52,7 @@ const connect = (context) => {
       let dx = ax - bx;
       let dy = ay - by;
       let dd = Math.sqrt(dx * dx + dy * dy)
-      let maxdd = 100;
+      let maxdd = 150;
 
       if(particles[j].color == '#ff0000' || particles[i].color == '#ff0000') continue;
       
@@ -134,12 +134,14 @@ class Particle {
     this.x += this.forcevx;
     this.y += this.forcevy;
 
-    if (this.x < 0 || this.x > this.width) {
-      this.vx *= -1;
-    }
+    if (this.type === 'heavy') {
+      if (this.x < 0 || this.x > this.width) {
+        this.vx *= -1;
+      }
 
-    if (this.y < 0 || this.y > this.height) {
-      this.vy *= -1;
+      if (this.y < 0 || this.y > this.height) {
+        this.vy *= -1;
+      }
     }
 
     this.forcevx *= 0.95;
@@ -147,6 +149,23 @@ class Particle {
 
     this.accx = 0;
     this.accy = 0;
+
+    if(this.type === 'normal') {
+      if (this.x < 0 || this.x > this.width || this.y < 0 || this.y > this.height) {
+        this.reset()
+      }
+    }
+  }
+
+  reset() {
+    this.x = random.range(this.width);
+    this.y = random.range(this.height);
+    this.vx = (Math.random() * 5) - 2.5;
+    this.vy = (Math.random() * 5) - 2.5;
+    this.accx = 0;
+    this.accy = 0;
+    this.forcevx = 0;
+    this.forcevy = 0;
   }
 
   draw(context) {
