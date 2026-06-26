@@ -10,6 +10,8 @@ const particles = [];
 const numParticles = 120;
 
 const sketch = ({ context, width, height }) => {  
+
+  particles.length = 0;
   
   for (let i = 0; i < numParticles; i++) {
 
@@ -17,7 +19,7 @@ const sketch = ({ context, width, height }) => {
       let x = random.range(width);
       let y = random.range(height);
 
-      let type = Math.random() < 0.1 ? 'heavy' : 'normal';
+      let type = Math.random() < 0.05 ? 'heavy' : 'normal';
 
       let particle = new Particle({ x, y, type, width, height });
 
@@ -28,7 +30,8 @@ const sketch = ({ context, width, height }) => {
   return ({ context, width, height }) => {
     context.fillStyle = 'black';
     context.fillRect(0, 0, width, height);
-
+    
+    interact(context);
     particles.forEach(particle => {
       particle.update();
       particle.draw(context);
@@ -50,13 +53,10 @@ const connect = (context) => {
       let dy = ay - by;
       let dd = Math.sqrt(dx * dx + dy * dy)
       let maxdd = 100;
-      let maxddd = 200;
 
-      //reduces fps drops lol
-      if (Math.abs(dx) > maxdd || Math.abs(dy) > maxdd) continue;
-
-
-      if (dd < maxddd) {
+      if(particles[j].color == '#ff0000' || particles[i].color == '#ff0000') continue;
+      
+      if (dd < maxdd) {
         context.save()
         context.strokeStyle = 'white';
         context.lineWidth = 2;
@@ -69,7 +69,38 @@ const connect = (context) => {
       }
     }
   }
-}
+};
+
+const interact = (context) => {
+  for (let i = 0; i < numParticles; i++) {
+    for (let j = i + 1; j < numParticles; j++) {
+      
+      if((particles[i].type === 'heavy' && particles[j].type === 'normal') || (particles[j].type === 'heavy' && particles[i].type === 'normal')) {
+        
+        let heavyParticle = particles[j].type === 'heavy' ? particles[j] : particles[i];
+        let normalParticle = heavyParticle === particles[j] ? particles[i] : particles[j];
+
+        let awayX = normalParticle.x - heavyParticle.x;
+        let awayY = normalParticle.y - heavyParticle.y;
+
+        let awayMag = Math.sqrt(awayX * awayX + awayY * awayY);
+
+        if(awayMag < 100) {
+          awayX = awayX / awayMag;
+          awayY = awayY / awayMag;
+
+          normalParticle.accx += awayX;
+          normalParticle.accy += awayY;
+        }
+
+       
+      }
+
+    }
+  }
+};
+
+canvasSketch(sketch, settings);
 
 class Particle {
   constructor({ x, y, type = 'normal', width, height }) {
@@ -85,12 +116,23 @@ class Particle {
 
     this.vx = (Math.random() * 5) - 2.5;
     this.vy = (Math.random() * 5) - 2.5;
+
+    this.forcevx = 0;
+    this.forcevy = 0;
+
+    this.accx = 0;
+    this.accy = 0;
   }
 
   update() {
+    this.forcevx += this.accx;
+    this.forcevy += this.accy;
 
     this.x += this.vx;
     this.y += this.vy;
+
+    this.x += this.forcevx;
+    this.y += this.forcevy;
 
     if (this.x < 0 || this.x > this.width) {
       this.vx *= -1;
@@ -99,6 +141,12 @@ class Particle {
     if (this.y < 0 || this.y > this.height) {
       this.vy *= -1;
     }
+
+    this.forcevx *= 0.95;
+    this.forcevy *= 0.95;
+
+    this.accx = 0;
+    this.accy = 0;
   }
 
   draw(context) {

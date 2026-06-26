@@ -87,8 +87,6 @@ const createAudio = () => {
   audioData = new Float32Array(analyserNode.frequencyBinCount);
 };
 
-canvasSketch(sketch, settings);
-
 const curl = ({ x, y }) => {
     //sample heights around (x, y)
     const up = random.noise2D(x, y + offset);
